@@ -52,17 +52,17 @@ const register = (req, res) => {
     .catch(err => console.log('Error finding user', err))
 }
 
-const login = async(req, res) => {
-    // POST = finding a user and returning the user
-    console.log('===> Inside of /register');
-    console.log('===> /register -> req.body');
+const login = async (req, res) => {
+    // POST - finding a user and returning the user
+    console.log('===> Inside of /login');
+    console.log('===> /login -> req.body');
     console.log(req.body);
 
-    const foundUser = await db.User.findOne({ email: req.body.email})
+    const foundUser = await db.User.findOne({ email: req.body.email });
 
     if (foundUser) {
         // user is in the DB
-        let isMatch = await bcrypt.compare(password, foundUser.password);
+        let isMatch = await bcrypt.compare(req.body.password, foundUser.password);
         console.log(isMatch);
         if (isMatch) {
             // if user match, then we want to send a JSON Web Token
@@ -74,11 +74,12 @@ const login = async(req, res) => {
                 email: foundUser.email,
                 name: foundUser.name
             }
+
             jwt.sign(payload, JWT_SECRET, { expiresIn: 3600 }, (err, token) => {
                 if (err) {
-                    res.status(400).json({ message: 'Session has ended, please log in again'});
+                    res.status(400).json({ message: 'Session has endedd, please log in again'});
                 }
-                const legit = jwt.verify(token, JWT_SECRET, { expiresIn: 60});
+                const legit = jwt.verify(token, JWT_SECRET, { expiresIn: 3600 });
                 console.log('===> legit');
                 console.log(legit);
                 res.json({ success: true, token: `Bearer ${token}`, userData: legit });
@@ -90,11 +91,22 @@ const login = async(req, res) => {
     } else {
         return res.status(400).json({ message: 'User not found' });
     }
-
 }
+
+// private
+const profile = (req, res) => {
+    console.log('====> inside /profile');
+    console.log(req.body);
+    console.log('====> user')
+    console.log(req.user);
+    const { id, name, email } = req.user; // object with user object inside
+    res.json({ id, name, email });
+}
+
 // Exports
 module.exports = {
     test,
     register,
     login,
+    profile,
 }
